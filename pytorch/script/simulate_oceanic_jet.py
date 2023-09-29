@@ -61,13 +61,13 @@ HR_COEFF_DIFFUSION = 1e-5
 LR_COEFF_DIFFUSION = 1e-5
 
 ROOT_DIR = str((pathlib.Path(os.environ["PYTHONPATH"]) / "..").resolve())
-DEVICE = "cuda"
+DEVICE = "cuda:0"
 
-DF_SEEDS = pd.read_csv(f"{ROOT_DIR}/pytorch/config/cfd_seeds/seeds01.csv").set_index(
+DF_SEEDS = pd.read_csv(f"{ROOT_DIR}/pytorch/config/seeds.csv").set_index(
     "SimulationNumber"
 )
 
-EXPERIMENT_DIR = f"{ROOT_DIR}/data/pytorch/CFD/jet15"
+EXPERIMENT_DIR = f"{ROOT_DIR}/data/CFD"
 os.makedirs(EXPERIMENT_DIR, exist_ok=True)
 
 low_pass_filter = LowPassFilter(
