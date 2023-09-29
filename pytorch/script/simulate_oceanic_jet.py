@@ -209,7 +209,7 @@ if __name__ == "__main__":
             logger.info("*********************************************************\n")
 
             result_dir = f"{EXPERIMENT_DIR}/seed{i_seed:05}"
-            os.makedirs(result_dir, exist_ok=True)
+            os.makedirs(result_dir, exist_ok=False)
 
             hr_model = make_and_initialize_hr_model(seed=seed, n_ensembles=N_ENSEMBLES)
 
