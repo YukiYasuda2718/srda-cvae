@@ -32,7 +32,7 @@
 - The experiments have been conducted in the Singularity container.
 - The container is started using [`./script/start_singularity_container.sh`](./script/start_singularity_container.sh).
   - The preferences, such as port numbers, need to be modified first.
-- The total data size will be about 80 GB, all of which are stored in `data`.
+- The total data size will be about 60 GB, all of which are stored in `data`.
 
 ### Make training data
 
@@ -53,4 +53,4 @@
 2. Connect to the JupyterLab inside the container.
 3. Run SRDA using [this notebook](./pytorch/notebook/run_srda.ipynb).
 4. Run EnKF using [this notebook](./pytorch/notebook/run_enkf.ipynb).
-5. Compare the results using this notebook.
+5. Plot the results using [this notebook](./pytorch/notebook/plot_results.ipynb).
