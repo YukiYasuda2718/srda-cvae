@@ -37,7 +37,7 @@ This repository contains the code used in "*A Theory of Evidence Lower Bound and
 
 - The experiments have been conducted in the Singularity container.
 - The container is started using [`./script/start_singularity_container.sh`](./script/start_singularity_container.sh).
-  - The preferences, such as port numbers, need to be modified first.
+  - The preferences, such as port numbers (`PORT`), need to be modified first.
 - The total data size will be about 60 GB, all of which are stored in `data`.
 
 ### Make training data
