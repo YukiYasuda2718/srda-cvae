@@ -1,4 +1,6 @@
-# srda-cvae  <!-- omit in toc -->
+#  Super-Resolution Data Assimilation (SRDA) Using Conditional Variational Autoencoders <!-- omit in toc -->
+
+This repository contains the code used in "*A Theory of Evidence Lower Bound and Its Application to Super-Resolution Data Assimilation (SRDA) Using Conditional Variational Autoencoders*" ([arXiv](./https://arxiv.org/abs/2308.03351)).
 
 - [Setup](#setup)
   - [Build Singularity container](#build-singularity-container)
@@ -7,6 +9,8 @@
   - [Make training data](#make-training-data)
   - [Train neural networks](#train-neural-networks)
   - [Compare results](#compare-results)
+  - [Train SR models with various scale factos](#train-sr-models-with-various-scale-factos)
+- [Citation](#citation)
 
 ## Setup
 
@@ -54,3 +58,18 @@
 3. Run SRDA using [this notebook](./pytorch/notebook/run_srda.ipynb).
 4. Run EnKF using [this notebook](./pytorch/notebook/run_enkf.ipynb).
 5. Plot the results using [this notebook](./pytorch/notebook/plot_results.ipynb).
+
+### Train SR models with various scale factos
+
+## Citation
+
+```bibtex
+@misc{
+  title={A Theory of Evidence Lower Bound and Its Application to Super-Resolution Data Assimilation (SRDA) Using Conditional Variational Autoencoders}, 
+  author={Yuki Yasuda and Ryo Onishi},
+  year={2023},
+  eprint={2308.03351},
+  archivePrefix={arXiv},
+  primaryClass={physics.ao-ph}
+}
+```
