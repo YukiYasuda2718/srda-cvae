@@ -42,16 +42,16 @@ This repository contains the code used in "*A Theory of Evidence Lower Bound and
 
 ### Make training data
 
-1. Set preferences, such as `HOME_DIR`, in [`./script/run_jet_simulations.sh`](./script/run_jet_simulations.sh).
-2. Run oceanic jet simulations: `$ ./script/run_jet_simulations.sh`
+1. Set preferences, such as `HOME_DIR`, in [`./script/simulate_oceanic_jet.sh`](./script/simulate_oceanic_jet.sh).
+2. Run oceanic jet simulations: `$ ./script/simulate_oceanic_jet.sh`
 3. Start the Singularity container: `$ ./script/start_singularity_container.sh`
 4. Connect to the JupyterLab inside the container.
 5. Split simulation results by running [this notebook](./pytorch/notebook/split_jet_simulation_results.ipynb).
 
 ### Train neural networks
 
-1. Set preferences, such as `HOME_DIR`, in [`./script/train_neural_nets.sh`](./script/train_neural_nets.sh).
-2. Run the training script: `$ ./script/train_neural_nets.sh`
+1. Set preferences, such as `HOME_DIR`, in [`./script/train_sr_model_and_cvae.sh`](./script/train_sr_model_and_cvae.sh).
+2. Run the training script: `$ ./script/train_sr_model_and_cvae.sh`
 
 ### Compare results
 
@@ -62,6 +62,9 @@ This repository contains the code used in "*A Theory of Evidence Lower Bound and
 5. Plot the results using [this notebook](./pytorch/notebook/plot_results.ipynb).
 
 ### Train SR models with various scale factos
+
+1. Set preferences, such as `SCALE_FACTOR`, in [`./script/train_sr_model.sh`](./script/train_sr_model.sh).
+2. Run the training script: `$ ./script/train_sr_model.sh`
 
 ## Citation
 
