@@ -11,6 +11,6 @@ singularity exec \
         --nv \
         --bind $ROOT_DIR:$HOME_DIR \
         --env PYTHONPATH=$HOME_DIR/pytorch \
-    $ROOT_DIR/pytorch.sif python3 $HOME_DIR/pytorch/script/train_model_ddp.py \
+    $ROOT_DIR/pytorch.sif python3 $HOME_DIR/pytorch/script/train_sr_model_and_cvae_ddp.py \
         --config_path $HOME_DIR/pytorch/config/$CONFIG_NAME \
         --world_size $WORLD_SIZE
