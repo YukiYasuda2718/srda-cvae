@@ -4,7 +4,7 @@ PORT=10168
 HOME_DIR=/home/yuki_yasuda/workspace_hub/srda-cvae
 ROOT_DIR=/data1/yuki_yasuda/workspace_hub/srda-cvae
 
-export CUDA_VISIBLE_DEVICES="0,1,2,3"
+export CUDA_VISIBLE_DEVICES="0"
 
 singularity exec \
         --nv \
