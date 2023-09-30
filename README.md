@@ -19,6 +19,8 @@ This repository contains the code used in "*A Theory of Evidence Lower Bound and
 
 ### Build Singularity container
 
+- The `sif` file size is about 7 GB.
+
 1. Check if `singularity` works.
 2. Build a container: `$ singularity build -f pytorch.sif ./singularity/pytorch.def`
 3. Change preferences in `./script/start_singularity_container.sh` if needed.
