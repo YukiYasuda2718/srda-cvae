@@ -26,7 +26,7 @@ model:
     feat_channels_1: 256
     feat_channels_2: 256
     n_encoder_blocks: 7
-    name: ConvSrNetVer02
+    name: ConvSrNet
   vae_model:
     bias: false
     decode_feat_channels: 8
@@ -36,17 +36,17 @@ model:
     n_decode_layers: 6
     n_encode_blocks: 5
     n_feat_blocks: 5
-    name: CVaeSnapshotVer03
+    name: Conv2dCvae
 train:
   first_step:
     early_stopping_epoch: 60
-    epochs: 1000
+    epochs: 3000
     loss:
       name: MaskedL1Loss
     lr: 0.0001
   second_step:
     early_stopping_epoch: 60
-    epochs: 1000
+    epochs: 3000
     loss:
       beta: 0.1
       name: VLB

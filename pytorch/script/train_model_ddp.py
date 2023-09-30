@@ -14,14 +14,9 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 import yaml
-from ml_model.conv2d_sr_v2 import ConvSrNetVer02
-from ml_model.conv2d_sr_v3 import ConvSrNetVer03
-from ml_model.cvae_snapshot_v2 import CVaeSnapshotVer02
-from ml_model.cvae_snapshot_v3 import CVaeSnapshotVer03
+from ml_model.conv2d_cvae import Conv2dCvae
+from ml_model.conv2d_sr_net import ConvSrNet
 from src.dataloader import (
-    make_dataloaders_2d_gauss_jet,
-    make_dataloaders_vorticity_assimilation,
-    make_dataloaders_vorticity_making_observation_inside,
     make_dataloaders_vorticity_making_observation_inside_time_series_splitted,
 )
 from src.loss_maker import MaskedL1Loss, VariationalLowerBoundSnapshot
@@ -48,11 +43,6 @@ parser.add_argument("--world_size", type=int, required=True)
 ROOT_DIR = str((pathlib.Path(os.environ["PYTHONPATH"]) / "..").resolve())
 
 
-def check_hr_data_paths_in_dataloader(dataloader):
-    for path in dataloader.dataset.hr_paths:
-        logger.info(os.path.basename(path))
-
-
 def setup(rank: int, world_size: int, backend: str = "nccl"):
     dist.init_process_group(backend, rank=rank, world_size=world_size)
 
@@ -76,54 +66,24 @@ def train_and_validate(
         logger.info("Make dataloaders and samplers")
         logger.info("################################\n")
 
-    if config["data"]["data_dir_name"] == "2d_gauss_jet_dt_01p00_v01":
-        dataloaders, samplers = make_dataloaders_2d_gauss_jet(
-            root_dir=ROOT_DIR, config=config, world_size=world_size, rank=rank
-        )
-    elif config["data"]["data_dir_name"] in [
-        "jet02_obs-intrvl27",
-        "jet03_obs-intrvl27",
-    ]:
-        dataloaders, samplers = make_dataloaders_vorticity_assimilation(
-            root_dir=ROOT_DIR, config=config, world_size=world_size, rank=rank
-        )
-    elif config["data"]["data_dir_name"] == "jet02_obs-intrvl27_not_using_obs":
-        dataloaders, samplers = make_dataloaders_vorticity_making_observation_inside(
-            ROOT_DIR, "jet02_obs-intrvl27", config, world_size=world_size, rank=rank
-        )
-    elif (
-        config["data"]["data_dir_name"] == "jet12"
-        or config["data"]["data_dir_name"] == "jet14"
-        or config["data"]["data_dir_name"] == "jet16"
-        or config["data"]["data_dir_name"] == "jet18"
-    ):
-        (
-            dataloaders,
-            samplers,
-        ) = make_dataloaders_vorticity_making_observation_inside_time_series_splitted(
-            ROOT_DIR, config, world_size=world_size, rank=rank
-        )
-    else:
-        raise Exception(
-            f'datadir name ({config["data"]["data_dir_name"]}) is not supported.'
-        )
+    (
+        dataloaders,
+        samplers,
+    ) = make_dataloaders_vorticity_making_observation_inside_time_series_splitted(
+        training_data_dir=f"{ROOT_DIR}/data/TrainingData",
+        config=config,
+        world_size=world_size,
+        rank=rank,
+    )
 
     if rank == 0:
-        # logger.info("\nCheck train_loader")
-        # check_hr_data_paths_in_dataloader(dataloaders["train"])
-        # logger.info("\nCheck valid_loader")
-        # check_hr_data_paths_in_dataloader(dataloaders["valid"])
-
         logger.info("\n###############################")
         logger.info("Make prior model and optimizer")
         logger.info("###############################\n")
 
-    if config["model"]["prior_model"]["name"] == "ConvSrNetVer02":
-        logger.info("Prior model is ConvSrNetVer02")
-        prior_model = ConvSrNetVer02(**config["model"]["prior_model"])
-    elif config["model"]["prior_model"]["name"] == "ConvSrNetVer03":
-        logger.info("Prior model is ConvSrNetVer03")
-        prior_model = ConvSrNetVer03(**config["model"]["prior_model"])
+    if config["model"]["prior_model"]["name"] == "ConvSrNet":
+        logger.info("Prior model is ConvSrNet")
+        prior_model = ConvSrNet(**config["model"]["prior_model"])
     else:
         raise NotImplementedError(
             f'{config["model"]["prior_model"]["name"]} is not supported.'
@@ -214,7 +174,6 @@ def train_and_validate(
             logger.info("-----")
 
     if rank == 0:
-        torch.save(best_weights, prior_weight_path)
         pd.DataFrame(all_scores).to_csv(prior_learning_history_path, index=False)
         logger.info(f"Best epoch: {best_epoch}, best_loss: {best_loss:.8f}")
 
@@ -223,12 +182,9 @@ def train_and_validate(
         logger.info("Make cvae model and optimizer")
         logger.info("###############################\n")
 
-    if config["model"]["vae_model"]["name"] == "CVaeSnapshotVer02":
-        logger.info("CVaeSnapshotVer02 is created.")
-        cvae = CVaeSnapshotVer02(**config["model"]["vae_model"])
-    elif config["model"]["vae_model"]["name"] == "CVaeSnapshotVer03":
-        logger.info("CVaeSnapshotVer03 is created.")
-        cvae = CVaeSnapshotVer03(**config["model"]["vae_model"])
+    if config["model"]["vae_model"]["name"] == "Conv2dCvae":
+        logger.info("Conv2dCvae is created.")
+        cvae = Conv2dCvae(**config["model"]["vae_model"])
     else:
         raise Exception(f'{config["model"]["vae_model"]["name"]} is not supported.')
 
@@ -317,7 +273,6 @@ def train_and_validate(
             logger.info("-----")
 
     if rank == 0:
-        torch.save(best_weights, cvae_weight_path)
         pd.DataFrame(all_scores).to_csv(cvae_learning_history_path, index=False)
         logger.info(f"Best epoch: {best_epoch}, best_loss: {best_loss:.8f}")
 
@@ -337,15 +292,14 @@ if __name__ == "__main__":
         world_size = parser.parse_args().world_size
         config_path = parser.parse_args().config_path
 
+        os.makedirs(f"{ROOT_DIR}/data/ModelWeights", exist_ok=True)
+
         with open(config_path) as file:
             config = yaml.safe_load(file)
 
-        experiment_name = config_path.split("/")[-2]
         config_name = os.path.basename(config_path).split(".")[0]
 
-        result_dir_path = (
-            f"{ROOT_DIR}/data/pytorch/DL_results/{experiment_name}/{config_name}"
-        )
+        result_dir_path = f"{ROOT_DIR}/data/ModelWeights/{config_name}"
         os.makedirs(result_dir_path, exist_ok=False)
 
         logger.addHandler(FileHandler(f"{result_dir_path}/log.txt"))
@@ -354,7 +308,6 @@ if __name__ == "__main__":
         logger.info(f"Start DDP: {datetime.datetime.utcnow()} UTC.")
         logger.info("*********************************************************\n")
 
-        logger.info(f"experiment name = {experiment_name}")
         logger.info(f"config name = {config_name}")
         logger.info(f"config path = {config_path}")
 
