@@ -3,20 +3,11 @@ services:
   pytorch:
     build:
       context: ./docker
-      args:
-        - http_proxy
-        - https_proxy
-        - HTTP_PROXY
-        - HTTPS_PROXY
     tty: true
     ports:
-      - "10188:8888"
+      - "8888:8888"
     command: jupyter lab --no-browser --ip=0.0.0.0 --allow-root --LabApp.token=''
     environment:
-      - http_proxy
-      - https_proxy
-      - HTTP_PROXY
-      - HTTPS_PROXY
       - PYTHONPATH=/workspace/pytorch
     volumes:
       - ./data:/workspace/data:cached
