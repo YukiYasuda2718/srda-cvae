@@ -6,7 +6,7 @@ ROOT_DIR=/data1/yuki_yasuda/workspace_hub/srda-cvae
 export CUDA_VISIBLE_DEVICES="0"
 
 I_SEED_START=0
-I_SEED_END=0
+I_SEED_END=249
 
 singularity exec \
       --nv \
