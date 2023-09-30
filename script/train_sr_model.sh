@@ -5,7 +5,7 @@ ROOT_DIR=/data1/yuki_yasuda/workspace_hub/srda-cvae
 
 export CUDA_VISIBLE_DEVICES="0,1"
 WORLD_SIZE=2
-SCALE_FACTOR=2
+SCALE_FACTOR=4
 
 singularity exec \
         --nv \
