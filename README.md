@@ -46,3 +46,6 @@
 
 ### Compare results
 
+1. Run SRDA using [this notebook](./pytorch/notebook/run_srda.ipynb).
+2. Run EnKF using [this notebook](./pytorch/notebook/run_enkf.ipynb).
+3. Compare the results using this notebook.
