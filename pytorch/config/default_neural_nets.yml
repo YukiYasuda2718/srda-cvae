@@ -1,0 +1,56 @@
+data:
+  batch_size: 128
+  beta_dist_alpha: 2.0
+  beta_dist_beta: 10.0
+  data_dir_name: jet16
+  is_output_only_last: true
+  lr_kind_names:
+  - lr_omega_no-noise
+  lr_time_interval: 4
+  obs_grid_interval: 8
+  obs_noise_std: 0.1
+  obs_time_interval: 4
+  train_valid_test_ratios:
+  - 0.7
+  - 0.2
+  - 0.1
+  use_mixup: false
+  use_mixup_init_time: false
+  use_observation: true
+  vorticity_bias: -14.5
+  vorticity_scale: 29.0
+model:
+  prior_model:
+    bias: false
+    feat_channels_0: 128
+    feat_channels_1: 256
+    feat_channels_2: 256
+    n_encoder_blocks: 7
+    name: ConvSrNet
+  vae_model:
+    bias: false
+    decode_feat_channels: 8
+    encode_feat_channels: 128
+    is_skipped_globally_decoder: false
+    is_skipped_globally_encoder: true
+    n_decode_layers: 6
+    n_encode_blocks: 5
+    n_feat_blocks: 5
+    name: Conv2dCvae
+train:
+  first_step:
+    early_stopping_epoch: 60
+    epochs: 3000
+    loss:
+      name: MaskedL1Loss
+    lr: 0.0001
+  second_step:
+    early_stopping_epoch: 60
+    epochs: 3000
+    loss:
+      beta: 0.1
+      name: VLB
+      std_latent: 0.01
+      std_reconst: 0.002
+    lr: 0.0005
+  seed: 10860

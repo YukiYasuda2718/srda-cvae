@@ -1,0 +1,21 @@
+version: "3"
+services:
+  pytorch:
+    build:
+      context: ./docker
+    tty: true
+    ports:
+      - "8888:8888"
+    command: jupyter lab --no-browser --ip=0.0.0.0 --allow-root --LabApp.token=''
+    environment:
+      - PYTHONPATH=/workspace/pytorch
+    volumes:
+      - ./data:/workspace/data:cached
+      - ./pytorch:/workspace/pytorch:cached
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
