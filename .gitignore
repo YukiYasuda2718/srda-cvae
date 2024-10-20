@@ -27,7 +27,6 @@ tf.logs
 tf.weights
 
 # Pytorch
-*.pth
 *.onnx
 
 # Singularity
