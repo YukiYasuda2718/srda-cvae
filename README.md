@@ -1,6 +1,6 @@
 #  Super-Resolution Data Assimilation (SRDA) Using Conditional Variational Autoencoders <!-- omit in toc -->
 
-This repository contains the code used in "*A Theory of Evidence Lower Bound and Its Application to Super-Resolution Data Assimilation (SRDA) Using Conditional Variational Autoencoders*" ([arXiv](./https://arxiv.org/abs/2308.03351)).
+This repository contains the code used in "*Theory of Super-Resolution Data Assimilation with Conditional Variational Autoencoders*" ([arXiv](https://arxiv.org/abs/2308.03351)).
 
 - [Setup](#setup)
   - [Build Singularity container](#build-singularity-container)
@@ -70,11 +70,12 @@ This repository contains the code used in "*A Theory of Evidence Lower Bound and
 
 ```bibtex
 @misc{
-  title={A Theory of Evidence Lower Bound and Its Application to Super-Resolution Data Assimilation (SRDA) Using Conditional Variational Autoencoders}, 
+  title={Theory of Super-Resolution Data Assimilation with Conditional Variational Autoencoders}, 
   author={Yuki Yasuda and Ryo Onishi},
-  year={2023},
+  year={2024},
   eprint={2308.03351},
   archivePrefix={arXiv},
-  primaryClass={physics.ao-ph}
+  primaryClass={physics.ao-ph},
+  url={https://arxiv.org/abs/2308.03351}, 
 }
 ```
