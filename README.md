@@ -1,6 +1,6 @@
 #  Super-Resolution Data Assimilation (SRDA) Using Conditional Variational Autoencoders <!-- omit in toc -->
 
-This repository contains the code used in "*A Theory of Evidence Lower Bound and Its Application to Super-Resolution Data Assimilation (SRDA) Using Conditional Variational Autoencoders*" ([arXiv](./https://arxiv.org/abs/2308.03351)).
+This repository contains the code used in "*Theory of Super-Resolution Data Assimilation with Conditional Variational Autoencoders*" ([arXiv](https://arxiv.org/abs/2308.03351)).
 
 - [Setup](#setup)
   - [Build Singularity container](#build-singularity-container)
@@ -9,7 +9,6 @@ This repository contains the code used in "*A Theory of Evidence Lower Bound and
   - [Make training data](#make-training-data)
   - [Train neural networks](#train-neural-networks)
   - [Compare results](#compare-results)
-  - [Train SR models with various scale factos](#train-sr-models-with-various-scale-factos)
 - [Citation](#citation)
 
 ## Setup
@@ -61,20 +60,16 @@ This repository contains the code used in "*A Theory of Evidence Lower Bound and
 4. Run EnKF using [this notebook](./pytorch/notebook/run_enkf.ipynb).
 5. Plot the results using [this notebook](./pytorch/notebook/plot_results.ipynb).
 
-### Train SR models with various scale factos
-
-1. Set preferences, such as `SCALE_FACTOR`, in [`./script/train_sr_model.sh`](./script/train_sr_model.sh).
-2. Run the training script: `$ ./script/train_sr_model.sh`
-
 ## Citation
 
 ```bibtex
 @misc{
-  title={A Theory of Evidence Lower Bound and Its Application to Super-Resolution Data Assimilation (SRDA) Using Conditional Variational Autoencoders}, 
+  title={Theory of Super-Resolution Data Assimilation with Conditional Variational Autoencoders}, 
   author={Yuki Yasuda and Ryo Onishi},
-  year={2023},
+  year={2024},
   eprint={2308.03351},
   archivePrefix={arXiv},
-  primaryClass={physics.ao-ph}
+  primaryClass={physics.ao-ph},
+  url={https://arxiv.org/abs/2308.03351}, 
 }
 ```

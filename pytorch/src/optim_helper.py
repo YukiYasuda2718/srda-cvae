@@ -32,7 +32,7 @@ def train_snapshot_cvae_ddp(
 
     for x, obs, is_obs, _ in dataloader:
         x, obs, is_obs = x.to(rank), obs.to(rank), is_obs.to(rank)
-        obs_reconst, mu, logvar = cvae(x, obs)
+        obs_reconst, mu, logvar, lr_ana = cvae(x, obs)
 
         with torch.no_grad():
             mu_prior = prior_model(x)
@@ -44,6 +44,8 @@ def train_snapshot_cvae_ddp(
             mu_prior=mu_prior,
             obs=obs,
             is_obs=is_obs,
+            lr_analysis=lr_ana,
+            lr_input=x,
         )
 
         optimizer.zero_grad()
@@ -81,7 +83,7 @@ def validate_snapshot_cvae_ddp(
         for x, obs, is_obs, _ in dataloader:
             x, obs, is_obs = x.to(rank), obs.to(rank), is_obs.to(rank)
 
-            obs_reconst, mu, logvar = cvae(x, obs)
+            obs_reconst, mu, logvar, lr_ana = cvae(x, obs)
             mu_prior = prior_model(x)
 
             vlb = vlb_fn(
@@ -91,6 +93,8 @@ def validate_snapshot_cvae_ddp(
                 mu_prior=mu_prior,
                 obs=obs,
                 is_obs=is_obs,
+                lr_analysis=lr_ana,
+                lr_input=x,
             )
 
             mean_loss += vlb * x.shape[0]

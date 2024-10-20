@@ -30,27 +30,27 @@ model:
   vae_model:
     bias: false
     decode_feat_channels: 8
-    encode_feat_channels: 128
-    is_skipped_globally_decoder: false
-    is_skipped_globally_encoder: true
+    encode_o_feat_channels: 224
+    encode_prior_feat_channels: 256
+    encode_x_feat_channels: 32
     n_decode_layers: 6
-    n_encode_blocks: 5
-    n_feat_blocks: 5
+    n_encode_blocks: 6
     name: Conv2dCvae
 train:
   first_step:
-    early_stopping_epoch: 60
-    epochs: 3000
+    early_stopping_epoch: 50
+    epochs: 8000
     loss:
       name: MaskedL1Loss
     lr: 0.0001
   second_step:
-    early_stopping_epoch: 60
-    epochs: 3000
+    early_stopping_epoch: 50
+    epochs: 8000
     loss:
       beta: 0.1
+      lr_weight: 0.0
       name: VLB
-      std_latent: 0.01
-      std_reconst: 0.002
-    lr: 0.0005
-  seed: 10860
+      std_latent: 0.03
+      std_reconst: 0.01
+    lr: 0.0001
+  seed: 92386

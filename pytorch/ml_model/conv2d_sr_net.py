@@ -28,6 +28,7 @@ class ConvSrNet(nn.Module):
         super(ConvSrNet, self).__init__()
         assert feat_channels_1 == feat_channels_2, "Not supported yet"
         assert num_shuffle_blocks >= 1
+        assert n_encoder_blocks >= 2
         assert scale_factor % 2 == 0
         assert (
             int(np.log2(scale_factor)) == num_shuffle_blocks
@@ -38,11 +39,22 @@ class ConvSrNet(nn.Module):
         self.scale_factor = scale_factor
         p = kernel_size // 2
 
+        self.feat_extractor = nn.Sequential(
+            nn.Conv2d(
+                in_channels,
+                feat_channels_0,
+                kernel_size=kernel_size,
+                padding=p,
+                bias=bias,
+            ),
+            nn.ReLU(),
+        )
+
         layers = []
-        for i in range(n_encoder_blocks):
+        for i in range(n_encoder_blocks - 1):
             layers.append(
                 nn.Conv2d(
-                    in_channels if i == 0 else feat_channels_0,
+                    feat_channels_0,
                     feat_channels_0,
                     kernel_size=kernel_size,
                     padding=p,
@@ -64,23 +76,33 @@ class ConvSrNet(nn.Module):
                 )
             )
 
-        layers.append(
-            nn.Conv2d(
-                feat_channels_2,
-                out_channels,
-                kernel_size=kernel_size,
-                padding=p,
-                bias=True,
-            )
+        self.last = nn.Conv2d(
+            feat_channels_2,
+            out_channels,
+            kernel_size=kernel_size,
+            padding=p,
+            bias=True,
         )
+
+        self.feat_channels = feat_channels_2
 
         self.decoder = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
-        _x = F.interpolate(x, scale_factor=self.scale_factor, mode="nearest")
+        _x = F.interpolate(x, scale_factor=self.scale_factor, mode="bicubic")
 
-        y = self.encoder(x)
+        y = self.feat_extractor(x)
+        y = self.encoder(y)
         y = self.decoder(y)
 
-        return y + _x
+        return self.last(y) + _x
+
+    def calc_super_resolved_features(self, x: torch.Tensor) -> torch.Tensor:
+        y = self.feat_extractor(x)
+        y = self.encoder(y)
+        y = self.decoder(y)
+        return y
+
+    def bicubic(self, x: torch.Tensor) -> torch.Tensor:
+        return F.interpolate(x, scale_factor=self.scale_factor, mode="bicubic")
