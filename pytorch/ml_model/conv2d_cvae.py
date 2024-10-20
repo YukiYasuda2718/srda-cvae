@@ -4,6 +4,7 @@ from logging import getLogger
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from ml_model.conv2d_block import EncoderBlock
 
 # Ref:
 # https://github.com/unnir/cVAE/blob/baad46d96b78c4e604bb3c49ad3c898b797c0709/cvae.py
@@ -25,7 +26,7 @@ class ResBlock(nn.Module):
                 padding=p,
                 bias=bias,
             ),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Conv2d(
                 in_channels,
                 in_channels,
@@ -34,7 +35,7 @@ class ResBlock(nn.Module):
                 bias=bias,
             ),
         )
-        self.act = nn.ReLU()
+        self.act = nn.LeakyReLU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.act(x + self.convs(x))
@@ -44,130 +45,111 @@ class Conv2dCvae(nn.Module):
     def __init__(
         self,
         *,
-        encode_feat_channels: int,
-        n_feat_blocks: int,
+        encode_x_feat_channels: int,
+        encode_o_feat_channels: int,
         n_encode_blocks: int,
         decode_feat_channels: int,
         n_decode_layers: int,
-        is_skipped_globally_encoder: bool,
-        is_skipped_globally_decoder: bool,
-        in_channels: int = 1,
-        out_channels: int = 1,
-        kernel_size: int = 3,
-        bias: bool = False,
-        lr_nx: int = 32,
-        lr_ny: int = 16,
-        hr_nx: int = 128,
-        hr_ny: int = 64,
+        bias: bool,
+        prior_model: nn.Module,
         **kwargs,
     ):
-        super(Conv2dCvae, self).__init__()
+        super().__init__()
 
-        assert n_feat_blocks > 1 and n_encode_blocks > 1
-        assert n_decode_layers != 1
+        assert n_encode_blocks > 1
+        assert n_decode_layers > 1
 
-        logger.info(f"Conv2dCvae bias = {bias}")
+        logger.info("This is Conv2dCvae.")
 
+        in_channels = 1
+        out_channels = 1
+        kernel_size = 3
         p = kernel_size // 2
 
-        self.lr_nx = lr_nx
-        self.lr_ny = lr_ny
-        self.hr_nx = hr_nx
-        self.hr_ny = hr_ny
-        self.n_decode_layers = n_decode_layers
-        self.is_skipped_globally_encoder = is_skipped_globally_encoder
-        self.is_skipped_globally_decoder = is_skipped_globally_decoder
+        self.lr_nx = 32
+        self.lr_ny = 16
+        self.hr_nx = 128
+        self.hr_ny = 64
+        self.prior = prior_model
 
-        layers = []
-        for i in range(n_feat_blocks):
-            layers.append(
-                nn.Conv2d(
-                    2 * in_channels if i == 0 else encode_feat_channels,
-                    encode_feat_channels,
-                    kernel_size=kernel_size,
-                    padding=p,
-                    bias=bias,
-                )
-            )
-            layers.append(nn.ReLU())
-        self.encode_x_feat_extractor = nn.Sequential(*layers)
+        for param in self.prior.parameters():
+            param.requires_grad = False
+        self.prior.eval()
 
-        layers = []
-        for i in range(n_feat_blocks):
-            layers.append(
-                nn.Conv2d(
-                    in_channels if i == 0 else encode_feat_channels,
-                    encode_feat_channels,
-                    kernel_size=kernel_size,
-                    padding=p,
-                    bias=bias,
-                )
-            )
-            layers.append(nn.ReLU())
-        self.encode_o_feat_extractor = nn.Sequential(*layers)
+        self.encode_x_feat_extractor = nn.Conv2d(
+            in_channels,
+            encode_x_feat_channels,
+            kernel_size=kernel_size,
+            padding=p,
+            bias=bias,
+        )
+
+        self.encode_o_feat_extractor = nn.Sequential(
+            EncoderBlock(
+                in_channels=in_channels,
+                out_channels=encode_o_feat_channels // 2,
+                stride=2,
+                kernel_size=kernel_size,
+                bias=bias,
+            ),
+            EncoderBlock(
+                in_channels=encode_o_feat_channels // 2,
+                out_channels=encode_o_feat_channels,
+                stride=2,
+                kernel_size=kernel_size,
+                bias=bias,
+            ),
+        )
 
         layers = []
         for i in range(n_encode_blocks):
             layers.append(
                 ResBlock(
-                    2 * encode_feat_channels,
+                    encode_x_feat_channels + encode_o_feat_channels,
                     kernel_size=kernel_size,
                     bias=bias,
                 )
             )
         layers.append(
             nn.Conv2d(
-                2 * encode_feat_channels,
+                encode_x_feat_channels + encode_o_feat_channels,
                 out_channels,
                 kernel_size=kernel_size,
                 padding=p,
                 bias=True,
             )
         )
-        self.encoder_mu = nn.Sequential(*layers)
+        self.encoder = nn.Sequential(*layers)
+
+        self.encoder_logvar = nn.Conv2d(
+            self.prior.feat_channels,
+            out_channels,
+            kernel_size=kernel_size,
+            padding=p,
+            bias=True,
+        )
 
         layers = []
-        for i in range(n_encode_blocks):
+        for i in range(n_decode_layers - 1):
             layers.append(
-                ResBlock(
-                    2 * encode_feat_channels,
+                nn.Conv2d(
+                    in_channels if i == 0 else decode_feat_channels,
+                    decode_feat_channels,
                     kernel_size=kernel_size,
-                    bias=bias,
+                    padding=p,
+                    bias=True,
                 )
             )
-        layers.append(
-            nn.Conv2d(
-                2 * encode_feat_channels,
-                out_channels,
-                kernel_size=kernel_size,
-                padding=p,
-                bias=True,
-            )
+            layers.append(nn.LeakyReLU())
+        self.decoder = nn.Sequential(*layers)
+
+        self.decoder_mu = nn.Conv2d(
+            decode_feat_channels,
+            out_channels,
+            kernel_size=kernel_size,
+            padding=p,
+            bias=True,
         )
-        self.encoder_logvar = nn.Sequential(*layers)
-
-        if self.n_decode_layers > 0:
-            layers = []
-            for i in range(self.n_decode_layers - 1):
-                layers.append(
-                    nn.Conv2d(
-                        in_channels if i == 0 else decode_feat_channels,
-                        decode_feat_channels,
-                        kernel_size=kernel_size,
-                        padding=p,
-                        bias=bias,
-                    )
-                )
-                layers.append(nn.LeakyReLU())
-            self.decoder = nn.Sequential(*layers)
-
-            self.decoder_mu = nn.Conv2d(
-                decode_feat_channels,
-                out_channels,
-                kernel_size=kernel_size,
-                padding=p,
-                bias=True,
-            )
 
     def encode(
         self, x: torch.Tensor, obs: torch.Tensor
@@ -177,21 +159,19 @@ class Conv2dCvae(nn.Module):
         assert x.shape[1:] == (1, self.lr_ny, self.lr_nx)
         assert obs.shape[1:] == (1, self.hr_ny, self.hr_nx)
 
-        _x = F.interpolate(x, size=(self.hr_ny, self.hr_nx), mode="nearest")
-
-        fx = torch.cat([_x, obs], dim=1)  # concat along channel dim
-        fx = self.encode_x_feat_extractor(fx)
+        fx = self.encode_x_feat_extractor(x)
         fo = self.encode_o_feat_extractor(obs)
 
         y = torch.cat([fx, fo], dim=1)  # concat along channel dim
+        y = self.encoder(y)
+        lr = y + x
 
+        y = self.prior.calc_super_resolved_features(lr)
+
+        mu = self.prior.last(y) + self.prior.bicubic(lr)
         logvar = self.encoder_logvar(y)
-        mu = self.encoder_mu(y)
 
-        if self.is_skipped_globally_encoder:
-            mu = mu + _x
-
-        return mu, logvar
+        return mu, logvar, lr
 
     def reparameterize(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
         std = torch.exp(0.5 * logvar)
@@ -203,20 +183,14 @@ class Conv2dCvae(nn.Module):
         # Check channel, x, y dims
         assert z.shape[1:] == (1, self.hr_ny, self.hr_nx)
 
-        if self.n_decode_layers == 0:
-            return z
-        else:
-            y = self.decoder(z)
-            y = self.decoder_mu(y)
+        y = self.decoder(z)
+        y = self.decoder_mu(y)
 
-            if self.is_skipped_globally_decoder:
-                y = y + z
-
-            return y
+        return y
 
     def forward(
         self, x: torch.Tensor, obs: torch.Tensor
     ) -> typing.Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        mu, logvar = self.encode(x, obs)
+        mu, logvar, lr = self.encode(x, obs)
         z = self.reparameterize(mu, logvar)
-        return self.decode(z), mu, logvar
+        return self.decode(z), mu, logvar, lr
