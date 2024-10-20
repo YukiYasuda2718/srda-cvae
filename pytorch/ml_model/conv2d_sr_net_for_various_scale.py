@@ -24,7 +24,7 @@ class ConvSrNet(nn.Module):
         num_shuffle_blocks: int = 2,
         scale_factor: int = 4,
         initialization: str = None,
-        interpolation: str = "nearest",
+        interpolation: str = "bicubic",
         **kwargs,
     ):
         super(ConvSrNet, self).__init__()
