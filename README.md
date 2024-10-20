@@ -9,7 +9,6 @@ This repository contains the code used in "*Theory of Super-Resolution Data Assi
   - [Make training data](#make-training-data)
   - [Train neural networks](#train-neural-networks)
   - [Compare results](#compare-results)
-  - [Train SR models with various scale factos](#train-sr-models-with-various-scale-factos)
 - [Citation](#citation)
 
 ## Setup
@@ -60,11 +59,6 @@ This repository contains the code used in "*Theory of Super-Resolution Data Assi
 3. Run SRDA using [this notebook](./pytorch/notebook/run_srda.ipynb).
 4. Run EnKF using [this notebook](./pytorch/notebook/run_enkf.ipynb).
 5. Plot the results using [this notebook](./pytorch/notebook/plot_results.ipynb).
-
-### Train SR models with various scale factos
-
-1. Set preferences, such as `SCALE_FACTOR`, in [`./script/train_sr_model.sh`](./script/train_sr_model.sh).
-2. Run the training script: `$ ./script/train_sr_model.sh`
 
 ## Citation
 
