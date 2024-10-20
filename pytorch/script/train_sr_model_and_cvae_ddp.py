@@ -30,7 +30,7 @@ from src.utils import set_seeds
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = r":4096:8"  # to make calculations deterministic
-set_seeds(42, use_deterministic=True)
+set_seeds(42, use_deterministic=False)
 
 logger = getLogger()
 logger.addHandler(StreamHandler(sys.stdout))
@@ -182,12 +182,30 @@ def train_and_validate(
         logger.info("Make cvae model and optimizer")
         logger.info("###############################\n")
 
+    # re-make prior model
+    del prior_model
+    if config["model"]["prior_model"]["name"] == "ConvSrNet":
+        logger.info("Prior model is ConvSrNet")
+        prior_model = ConvSrNet(**config["model"]["prior_model"])
+    else:
+        raise NotImplementedError(
+            f'{config["model"]["prior_model"]["name"]} is not supported.'
+        )
+
+    prior_model.load_state_dict(torch.load(prior_weight_path))
+
+    # fix all params
+    for param in prior_model.parameters():
+        param.requires_grad = False
+    _ = prior_model.eval()
+
     if config["model"]["vae_model"]["name"] == "Conv2dCvae":
         logger.info("Conv2dCvae is created.")
-        cvae = Conv2dCvae(**config["model"]["vae_model"])
+        cvae = Conv2dCvae(prior_model=prior_model, **config["model"]["vae_model"])
     else:
         raise Exception(f'{config["model"]["vae_model"]["name"]} is not supported.')
 
+    prior_model = prior_model.to(rank)
     cvae = DDP(cvae.to(rank), device_ids=[rank])
     vlb_fn = VariationalLowerBoundSnapshot(**config["train"]["second_step"]["loss"])
     optimizer = torch.optim.Adam(
